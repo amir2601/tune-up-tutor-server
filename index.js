@@ -51,7 +51,8 @@ async function run() {
 
         app.get('/popular-instructors', async (req, res) => {
             const query = {role: 'instructor'} ;
-            const result = await usersCollection.find(query).toArray().limit(2);
+            const cursor = usersCollection.find(query);
+            const result = (await cursor.toArray()).slice(0, 6);
             res.send(result);
         })
 
