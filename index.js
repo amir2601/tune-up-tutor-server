@@ -29,6 +29,7 @@ async function run() {
 
         const usersCollection = client.db("tuneUpDb").collection("users");
 
+        // users related apis
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
@@ -38,6 +39,19 @@ async function run() {
                 return res.send({ message: 'user already exist' })
             }
             const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
+
+        // instructor related apis
+        app.get('/instructors', async (req, res) => {
+            const query = {role: 'instructor'} ;
+            const result = await usersCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.get('/popular-instructors', async (req, res) => {
+            const query = {role: 'instructor'} ;
+            const result = await usersCollection.find(query).toArray().limit(2);
             res.send(result);
         })
 
