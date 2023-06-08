@@ -29,6 +29,7 @@ async function run() {
 
         const usersCollection = client.db("tuneUpDb").collection("users");
         const classesCollection = client.db("tuneUpDb").collection("classes");
+        const selectedClassesCollection = client.db("tuneUpDb").collection("selectedClasses");
 
         // users related apis
         app.get('/users/:email', async (req, res) => {
@@ -74,6 +75,18 @@ async function run() {
         app.get('/popular-classes', async (req, res) => {
             const sortOrder = -1;
             const result = await classesCollection.find().sort({price: sortOrder}).toArray();
+            res.send(result);
+        })
+
+        // Selected Classes related apis
+
+        app.post('/select-class', async (req, res) => {
+            const selectedClass = req.body;
+            const doc = {
+                className: selectedClass.className,
+                name: selectedClass.name
+            };
+            const result = await selectedClassesCollection.insertOne(doc);
             res.send(result);
         })
 
