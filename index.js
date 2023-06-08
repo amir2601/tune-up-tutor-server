@@ -84,7 +84,14 @@ async function run() {
             const selectedClass = req.body;
             const doc = {
                 className: selectedClass.className,
-                name: selectedClass.name
+                name: selectedClass.name,
+                email: selectedClass.email,
+                studentEmail: selectedClass.studentEmail,
+                price: selectedClass.price,
+                seats: selectedClass.seats,
+                students: selectedClass.students,
+                img: selectedClass.img
+
             };
             const result = await selectedClassesCollection.insertOne(doc);
             res.send(result);
