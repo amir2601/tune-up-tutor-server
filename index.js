@@ -28,6 +28,7 @@ async function run() {
         // await client.connect();
 
         const usersCollection = client.db("tuneUpDb").collection("users");
+        const classesCollection = client.db("tuneUpDb").collection("classes");
 
         // users related apis
         app.post('/users', async (req, res) => {
@@ -53,6 +54,12 @@ async function run() {
             const query = {role: 'instructor'} ;
             const cursor = usersCollection.find(query);
             const result = (await cursor.toArray()).slice(0, 6);
+            res.send(result);
+        })
+
+        // classes related apis
+        app.get('/classes', async (req, res) => {
+            const result = await classesCollection.find().toArray();
             res.send(result);
         })
 
