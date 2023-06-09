@@ -10,7 +10,7 @@ app.use(express.json())
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tujztw6.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -34,7 +34,7 @@ async function run() {
         // users related apis
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {email: email}
+            const query = { email: email }
             const result = await usersCollection.findOne(query);
 
             res.send(result)
@@ -54,13 +54,13 @@ async function run() {
 
         // instructor related apis
         app.get('/instructors', async (req, res) => {
-            const query = {role: 'instructor'} ;
+            const query = { role: 'instructor' };
             const result = await usersCollection.find(query).toArray();
             res.send(result);
         })
 
         app.get('/popular-instructors', async (req, res) => {
-            const query = {role: 'instructor'} ;
+            const query = { role: 'instructor' };
             const cursor = usersCollection.find(query);
             const result = (await cursor.toArray()).slice(0, 6);
             res.send(result);
@@ -74,7 +74,7 @@ async function run() {
 
         app.get('/popular-classes', async (req, res) => {
             const sortOrder = -1;
-            const result = await classesCollection.find().sort({price: sortOrder}).toArray();
+            const result = await classesCollection.find().sort({ price: sortOrder }).toArray();
             res.send(result);
         })
 
@@ -95,6 +95,23 @@ async function run() {
             };
             const result = await selectedClassesCollection.insertOne(doc);
             res.send(result);
+        })
+
+        app.get('/select-class/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { studentEmail: email };
+            const result = await selectedClassesCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.delete('/select-class/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            console.log(query);
+            const result = await selectedClassesCollection.deleteOne(query);
+            console.log(result);
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection
