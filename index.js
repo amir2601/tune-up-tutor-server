@@ -79,9 +79,23 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/my-added-classes/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await addedClassesCollection.find(query).toArray();
+            res.send(result);
+        })
+
         app.get('/popular-classes', async (req, res) => {
             const sortOrder = -1;
             const result = await classesCollection.find().sort({ price: sortOrder }).toArray();
+            res.send(result);
+        })
+
+        // admin related apis
+
+        app.get('/added-classes', async (req, res) => {
+            const result = await addedClassesCollection.find().toArray();
             res.send(result);
         })
 
