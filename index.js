@@ -30,7 +30,6 @@ async function run() {
         const usersCollection = client.db("tuneUpDb").collection("users");
         const classesCollection = client.db("tuneUpDb").collection("classes");
         const selectedClassesCollection = client.db("tuneUpDb").collection("selectedClasses");
-        const addedClassesCollection = client.db("tuneUpDb").collection("addedClasses");
 
         // users related apis
         app.get('/users/:email', async (req, res) => {
