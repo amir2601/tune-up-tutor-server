@@ -63,6 +63,20 @@ async function run() {
             res.send(result);
         })
 
+        // update user role
+        app.patch('/users/:id', async (req, res) => {
+            const id = req.params.id
+            const updateRole = req.body;
+            const filter = {_id: new ObjectId(id)}
+            const updateDoc = {
+                $set: {
+                    role: updateRole.role
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
+
         app.post('/add-class', async (req, res) => {
             const newClass = req.body;
             const result = await classesCollection.insertOne(newClass);
@@ -91,7 +105,7 @@ async function run() {
 
         app.get('/popular-classes', async (req, res) => {
             const sortOrder = -1;
-            const result = await classesCollection.find().sort({ price: sortOrder }).toArray();
+            const result = await classesCollection.find().sort({ students: sortOrder }).toArray();
             res.send(result);
         })
 
@@ -136,6 +150,20 @@ async function run() {
             console.log(query);
             const result = await selectedClassesCollection.deleteOne(query);
             console.log(result);
+            res.send(result)
+        })
+
+        // update class status
+        app.patch('/classes/:id', async (req, res) => {
+            const id = req.params.id
+            const updateStatus = req.body;
+            const filter = {_id: new ObjectId(id)}
+            const updateDoc = {
+                $set: {
+                    status: updateStatus.status
+                }
+            }
+            const result = await classesCollection.updateOne(filter, updateDoc);
             res.send(result)
         })
 
