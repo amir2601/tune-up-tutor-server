@@ -60,6 +60,12 @@ async function run() {
             res.send(result);
         })
 
+        app.post('/add-class', async (req, res) => {
+            const newClass = req.body;
+            const result = await classesCollection.insertOne(newClass);
+            res.send(result);
+        })
+
         app.get('/popular-instructors', async (req, res) => {
             const query = { role: 'instructor' };
             const cursor = usersCollection.find(query);
@@ -73,16 +79,10 @@ async function run() {
             res.send(result);
         })
 
-        app.post('/add-class', async (req, res) => {
-            const newClass = req.body;
-            const result = await addedClassesCollection.insertOne(newClass);
-            res.send(result);
-        })
-
         app.get('/my-added-classes/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
-            const result = await addedClassesCollection.find(query).toArray();
+            const result = await classesCollection.find(query).toArray();
             res.send(result);
         })
 
@@ -95,7 +95,7 @@ async function run() {
         // admin related apis
 
         app.get('/added-classes', async (req, res) => {
-            const result = await addedClassesCollection.find().toArray();
+            const result = await classesCollection.find().toArray();
             res.send(result);
         })
 
