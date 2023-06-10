@@ -32,11 +32,15 @@ async function run() {
         const selectedClassesCollection = client.db("tuneUpDb").collection("selectedClasses");
 
         // users related apis
+        app.get('/users', async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result)
+        })
+
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const result = await usersCollection.findOne(query);
-
             res.send(result)
         })
 
@@ -99,6 +103,7 @@ async function run() {
         })
 
         // Selected Classes related apis
+        // Student related apis
 
         app.post('/select-class', async (req, res) => {
             const selectedClass = req.body;
