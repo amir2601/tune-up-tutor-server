@@ -4,6 +4,8 @@ const cors = require('cors');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
+
 // middleware
 app.use(cors())
 app.use(express.json())
@@ -30,6 +32,30 @@ async function run() {
         const usersCollection = client.db("tuneUpDb").collection("users");
         const classesCollection = client.db("tuneUpDb").collection("classes");
         const selectedClassesCollection = client.db("tuneUpDb").collection("selectedClasses");
+        const bookingsCollection = client.db("tuneUpDb").collection("bookings");
+
+        // payment related apis
+
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body
+            const amount = parseFloat(price) * 100
+            if (!price) return
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card'],
+            })
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
+        })
+
+        app.post('/booking-data', async (req, res) => {
+            const bookingInfo = req.body;
+            const result = await bookingsCollection.insertOne(bookingInfo);
+            res.send(result)
+        })
 
         // users related apis
         app.get('/users', async (req, res) => {
@@ -67,7 +93,7 @@ async function run() {
         app.patch('/users/:id', async (req, res) => {
             const id = req.params.id
             const updateRole = req.body;
-            const filter = {_id: new ObjectId(id)}
+            const filter = { _id: new ObjectId(id) }
             const updateDoc = {
                 $set: {
                     role: updateRole.role
@@ -157,7 +183,7 @@ async function run() {
         app.patch('/classes/:id', async (req, res) => {
             const id = req.params.id
             const updateStatus = req.body;
-            const filter = {_id: new ObjectId(id)}
+            const filter = { _id: new ObjectId(id) }
             const updateDoc = {
                 $set: {
                     status: updateStatus.status
@@ -170,7 +196,7 @@ async function run() {
         app.patch('/feedback/:id', async (req, res) => {
             const id = req.params.id
             const updateFeedback = req.body;
-            const filter = {_id: new ObjectId(id)}
+            const filter = { _id: new ObjectId(id) }
             const updateDoc = {
                 $set: {
                     feedback: updateFeedback.feedback
