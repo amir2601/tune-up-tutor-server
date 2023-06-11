@@ -32,7 +32,8 @@ async function run() {
         const usersCollection = client.db("tuneUpDb").collection("users");
         const classesCollection = client.db("tuneUpDb").collection("classes");
         const selectedClassesCollection = client.db("tuneUpDb").collection("selectedClasses");
-        const bookingsCollection = client.db("tuneUpDb").collection("bookings");
+        const enrolledClassCollection = client.db("tuneUpDb").collection("enrolledClass");
+        const paymentInfoCollection = client.db("tuneUpDb").collection("paymentInfo");
 
         // payment related apis
 
@@ -52,9 +53,34 @@ async function run() {
         })
 
         app.post('/booking-data', async (req, res) => {
-            const bookingInfo = req.body;
-            const result = await bookingsCollection.insertOne(bookingInfo);
-            res.send(result)
+            const {paymentInfo, enrolledClass} = req.body;
+
+            const setPaymentInfo = await paymentInfoCollection.insertOne(paymentInfo);
+
+            const setEnrolledClass = await enrolledClassCollection.insertOne(enrolledClass);
+
+            const query = {_id: new ObjectId(enrolledClass.classId)}
+
+            const deleteSelectedClass = await selectedClassesCollection.deleteOne(query);
+
+            const filter = {_id: new ObjectId(enrolledClass.mainClassId)}
+
+            const updateDoc = {
+                $set: {
+                    seats: enrolledClass.seats - 1,
+                    students: enrolledClass.students + 1
+                }
+            }
+
+            const updateClass = await classesCollection.updateOne(filter, updateDoc);
+
+
+            res.send({
+                setPaymentInfo,
+                setEnrolledClass,
+                deleteSelectedClass,
+                updateClass
+            })
         })
 
         // users related apis
@@ -122,6 +148,13 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)}
+            const result = await selectedClassesCollection.findOne(query);
+            res.send(result);
+        })
+
         app.get('/my-added-classes/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
@@ -148,6 +181,7 @@ async function run() {
         app.post('/select-class', async (req, res) => {
             const selectedClass = req.body;
             const doc = {
+                mainClassId: selectedClass.mainClassId,
                 className: selectedClass.className,
                 name: selectedClass.name,
                 email: selectedClass.email,
@@ -173,7 +207,6 @@ async function run() {
             const id = req.params.id;
             console.log(id);
             const query = { _id: new ObjectId(id) };
-            console.log(query);
             const result = await selectedClassesCollection.deleteOne(query);
             console.log(result);
             res.send(result)
