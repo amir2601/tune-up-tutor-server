@@ -168,6 +168,13 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/enrolled-classes/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { studentEmail: email };
+            const result = await enrolledClassCollection.find(query).toArray();
+            res.send(result);
+        })
+
         // admin related apis
 
         app.get('/added-classes', async (req, res) => {
@@ -200,6 +207,13 @@ async function run() {
             const email = req.params.email;
             const query = { studentEmail: email };
             const result = await selectedClassesCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.get('/payment-history/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await paymentInfoCollection.find(query).toArray();
             res.send(result);
         })
 
