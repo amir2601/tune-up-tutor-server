@@ -100,7 +100,6 @@ async function run() {
             const user = req.body;
             const query = { email: user.email }
             const existingUser = await usersCollection.findOne(query)
-            console.log('existingUser', existingUser);
             if (existingUser) {
                 return res.send({ message: 'user already exist' })
             }
@@ -219,10 +218,8 @@ async function run() {
 
         app.delete('/select-class/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const query = { _id: new ObjectId(id) };
             const result = await selectedClassesCollection.deleteOne(query);
-            console.log(result);
             res.send(result)
         })
 
