@@ -7,8 +7,24 @@ const port = process.env.PORT || 5000;
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 // middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
+
+// Express 4 does not catch rejected promises from async route handlers, which
+// leaves requests hanging instead of returning a 500. Wrap every handler so
+// thrown errors are forwarded to the error-handling middleware below.
+['get', 'post', 'put', 'patch', 'delete', 'all'].forEach((method) => {
+    const register = app[method].bind(app);
+    app[method] = (path, ...handlers) =>
+        register(
+            path,
+            ...handlers.map((handler) =>
+                typeof handler === 'function' && handler.length < 4
+                    ? (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)
+                    : handler
+            )
+        );
+});
 
 
 
@@ -39,8 +55,10 @@ async function run() {
 
         app.post('/create-payment-intent', async (req, res) => {
             const { price } = req.body
-            const amount = parseFloat(price) * 100
-            if (!price) return
+            const amount = Math.round(parseFloat(price) * 100)
+            if (!price || Number.isNaN(amount) || amount < 1) {
+                return res.status(400).send({ error: 'A valid price is required' })
+            }
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: 'usd',
@@ -55,6 +73,10 @@ async function run() {
         app.post('/booking-data', async (req, res) => {
             const { paymentInfo, enrolledClass } = req.body;
 
+            if (!paymentInfo || !enrolledClass || !enrolledClass.classId) {
+                return res.status(400).send({ error: 'paymentInfo and enrolledClass (with classId) are required' })
+            }
+
             const setPaymentInfo = await paymentInfoCollection.insertOne(paymentInfo);
 
             const setEnrolledClass = await enrolledClassCollection.insertOne(enrolledClass);
@@ -63,16 +85,27 @@ async function run() {
 
             const deleteSelectedClass = await selectedClassesCollection.deleteOne(query);
 
-            const filter = { _id: new ObjectId(enrolledClass.mainClassId) }
-
-            const updateDoc = {
-                $set: {
-                    seats: enrolledClass.seats - 1,
-                    students: enrolledClass.students + 1
+            // Atomic, coercion-safe update: legacy documents may store seats as a
+            // string, so cast with $toInt and increment in one round-trip. This
+            // avoids overwriting concurrent bookings with stale client values.
+            const updateDoc = [
+                {
+                    $set: {
+                        seats: { $subtract: [{ $toInt: { $ifNull: ['$seats', 0] } }, 1] },
+                        students: { $add: [{ $toInt: { $ifNull: ['$students', 0] } }, 1] }
+                    }
                 }
-            }
+            ]
 
-            const updateClass = await classesCollection.updateOne(filter, updateDoc);
+            // Very old selections may not carry mainClassId — still enrol the
+            // student, just skip the seat/student counter on the source class.
+            let updateClass = { acknowledged: true, matchedCount: 0, modifiedCount: 0 }
+            if (enrolledClass.mainClassId) {
+                updateClass = await classesCollection.updateOne(
+                    { _id: new ObjectId(enrolledClass.mainClassId) },
+                    updateDoc
+                )
+            }
 
 
             res.send({
@@ -299,6 +332,17 @@ run().catch(console.dir);
 
 app.get('/', (req, res) => {
     res.send('tutor is running')
+})
+
+// Fallbacks (registered after every route)
+app.use((req, res) => {
+    res.status(404).send({ error: 'Not found' })
+})
+
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+    console.error(err)
+    res.status(500).send({ error: 'Internal server error' })
 })
 
 app.listen(port, (req, res) => {
