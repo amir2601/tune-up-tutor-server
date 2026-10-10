@@ -1,7 +1,7 @@
 <div align="center">
-  <h1>Tune-Up Tutor (Server)</h1>
+  <h1>Tune Up Tutor (Server)</h1>
   <p>
-    Express + MongoDB REST API powering the Tune-Up Tutor music academy. Handles auth-driven user management, role-based access, class catalog, student selections, and Stripe payments.
+    Express + MongoDB REST API powering the Tune Up Tutor music academy. Handles auth-driven user management, role-based access, class catalog, student selections, and Stripe payments.
   </p>
 
   <p>
